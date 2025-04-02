@@ -341,7 +341,22 @@ void WB()
 	for register-immediate instruction: REGS[rt] <= ALUOutput
 	for load instruction: REGS[rt] <= LMD 
 	*/
-	/*Implement this function*/
+	if (MEM_WB.IR == 0) return;  // No-op if the instruction is empty
+
+    uint8_t opcode = GET_OPCODE(MEM_WB.IR);
+    uint8_t rd = (MEM_WB.IR >> 7) & BIT_MASK_5;  // Destination register (rd)
+    uint8_t rt = (MEM_WB.IR >> 20) & BIT_MASK_5; // For I-type or Load
+
+    if (opcode == R_OPCODE || opcode == IMM_ALU_OPCODE) {
+        // Register-register or register-immediate instruction
+        NEXT_STATE.REGS[rd] = MEM_WB.ALUOutput;
+    } else if (opcode == LOAD_OPCODE) {
+        // Load instruction
+        NEXT_STATE.REGS[rt] = MEM_WB.LMD;
+    }
+
+    // Increment the instruction count after successful execution
+    INSTRUCTION_COUNT++;
 }
 
 /************************************************************/

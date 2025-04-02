@@ -359,7 +359,36 @@ void EX()
 /************************************************************/
 void ID()
 {
-	/*Implement this function*/
+	// Decode the fetched instruction
+    uint32_t instruction = IF_ID.IR;  // Get instruction from the pipeline register
+    uint8_t opcode = GET_OPCODE(instruction);
+    uint8_t funct3 = GET_FUNCT3(instruction);
+
+    // Extract register operands
+    uint8_t rs1 = (instruction >> 15) & BIT_MASK_5;
+    uint8_t rs2 = (instruction >> 20) & BIT_MASK_5;
+    uint8_t rd  = (instruction >> 7) & BIT_MASK_5;
+
+    // Read values from the register file
+    ID_EX.A = CURRENT_STATE.REGS[rs1];  // Read first source register
+    ID_EX.B = CURRENT_STATE.REGS[rs2];  // Read second source register (only for R-type and Store instructions)
+
+    // Extract and sign-extend immediate field only for relevant instructions
+    if (opcode == IMM_ALU_OPCODE || opcode == LOAD_OPCODE) {
+        // I-type instruction: sign-extend 12-bit immediate
+        ID_EX.imm = (int32_t)(instruction >> 20);  
+    } 
+    else if (opcode == STORE_OPCODE) {
+        // S-type instruction: combine imm[11:5] and imm[4:0]
+        ID_EX.imm = ((int32_t)(instruction >> 25) << 5) | ((instruction >> 7) & BIT_MASK_5);
+    } 
+    else {
+        ID_EX.imm = 0;  // No immediate needed for R-type instructions
+    }
+
+    // Pass PC to next pipeline stage
+    ID_EX.PC = IF_ID.PC;
+    ID_EX.IR = IF_ID.IR;  // Pass instruction forward for debugging or later stages
 }
 
 /************************************************************/
@@ -367,7 +396,14 @@ void ID()
 /************************************************************/
 void IF()
 {
-	/*Implement this function*/
+	// Fetch the instruction from memory at the current PC
+    IF_ID.IR = mem_read_32(CURRENT_STATE.PC);
+    
+    // Store the PC of the fetched instruction for later stages
+    IF_ID.PC = CURRENT_STATE.PC;
+    
+    // Increment PC to point to the next instruction (assuming no branch/jump yet)
+    NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }
 
 

@@ -394,8 +394,81 @@ void MEM()
 void EX()
 {
 	EX_MEM.IR = ID_EX.IR;
-	
-	EX_MEM.ALUOutput
+	uint32_t instruction = ID_EX.IR;  // Get instruction from the pipeline register
+	uint8_t opcode = GET_OPCODE(instruction);
+	uint8_t funct3 = GET_FUNCT3(instruction);
+	if(opcode == LOAD_OPCODE || opcode == STORE_OPCODE){
+		EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
+	}
+	else if(opcode == R_OPCODE){	//reg-reg operation
+		//get funct7
+		uint8_t funct7 = (instruction >> 25) & 0x7F;
+		switch (funct3)
+		{
+		case 0x0:
+			switch(funct7){
+				case 0x00:	//ADD
+					EX_MEM.ALUOutput = ID_EX.A + ID_EX.B;
+				break;
+				case 0x20:	//SUB
+					EX_MEM.ALUOutput = ID_EX.A - ID_EX.B;
+				break;
+			}
+			break;
+		case 0x4:	//XOR
+			EX_MEM.ALUOutput = ID_EX.A ^ ID_EX.B;
+			break;
+		case 0x6:	//OR
+			EX_MEM.ALUOutput = ID_EX.A | ID_EX.B;
+			break;
+		case 0x7:	//AND
+			EX_MEM.ALUOutput = ID_EX.A & ID_EX.B;
+			break;
+		case 0x1:	//Shift left logical
+			EX_MEM.ALUOutput = ID_EX.A << ID_EX.B;
+			break;
+		case 0x5:			//NOTE: THIS NEEDS TO BE FIXED TO ENSURE THE MSB EXTENDS ON SRA
+			switch(funct7){
+				case 0x00:	//shift right logical
+					EX_MEM.ALUOutput = ID_EX.A >> ID_EX.B;
+					break;
+				case 0x20:	//shift right arithmetic
+					EX_MEM.ALUOutput = ID_EX.A >> ID_EX.B;
+					break;
+			}
+			break;
+		case 0x2:	//set less than
+			EX_MEM.ALUOutput = (ID_EX.A < ID_EX.B)?1:0;
+			break;
+		case 0x3:	//set less than (unsigned)
+			EX_MEM.ALUOutput = (ID_EX.A < ID_EX.B)?1:0;
+			break;
+		default:	//error
+			break;
+		}
+	}
+	else if(opcode == IMM_ALU_OPCODE){	//reg-immediate operation
+		switch(funct3){
+			case 0x0:	//Add immediate
+				EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
+				break;
+			case 0x4:	//XOR Immediate
+				EX_MEM.ALUOutput = ID_EX.A ^ ID_EX.imm;
+				break;
+			case 0x6:	//OR Immed
+				break;
+			case 0x7:
+				break;
+			case 0x1:
+				break;
+			case 0x5:
+				break;
+			case 0x2:
+				break;
+			case 0x3:
+				break;
+		}
+	}
 	/*
 	i) Memory Reference (load/store):
 		ALUOutput <= A + imm

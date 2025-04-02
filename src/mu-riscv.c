@@ -356,7 +356,22 @@ void MEM()
 	for store: MEM[ALUOutput] <= B 
 	*/
 
-	/*Implement this function*/
+	if (EX_MEM.IR == 0) return; // No instruction to execute
+    
+    uint32_t opcode = GET_OPCODE(EX_MEM.IR);
+    
+    if (opcode == LOAD_OPCODE) {
+        // Load instruction: Read from memory
+        MEM_WB.LMD = mem_read_32(EX_MEM.ALUOutput);
+    } else if (opcode == STORE_OPCODE) {
+        // Store instruction: Write to memory
+        mem_write_32(EX_MEM.ALUOutput, EX_MEM.B);
+    }
+    
+    // Pass values to MEM_WB pipeline register
+    MEM_WB.IR = EX_MEM.IR;
+    MEM_WB.PC = EX_MEM.PC;
+    MEM_WB.ALUOutput = EX_MEM.ALUOutput;
 }
 
 /************************************************************/

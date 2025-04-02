@@ -336,6 +336,11 @@ void handle_pipeline()
 /************************************************************/
 void WB()
 {
+	/*
+	for register-register instruction: REGS[rd] <= ALUOutput
+	for register-immediate instruction: REGS[rt] <= ALUOutput
+	for load instruction: REGS[rt] <= LMD 
+	*/
 	/*Implement this function*/
 }
 
@@ -344,14 +349,53 @@ void WB()
 /************************************************************/
 void MEM()
 {
+	//For immediate: bubble
+
+	/*
+	for load: LMD <= MEM[ALUOutput]
+	for store: MEM[ALUOutput] <= B 
+	*/
+
 	/*Implement this function*/
 }
 
 /************************************************************/
 /* execution (EX) pipeline stage:                                                                          */
 /************************************************************/
+
+/*
+	Pull these from ID/EX:
+	ID/EX.IR
+	ID/EX.A
+	ID/EX.B
+	ID/EX.imm 
+
+	Fill these into EX/MEM:
+	EX/MEM.IR
+	EX/MEM.A
+	EX/MEM.B
+	EX/MEM.ALUOutput 
+*/
 void EX()
 {
+	EX_MEM.IR = ID_EX.IR;
+	
+	EX_MEM.ALUOutput
+	/*
+	i) Memory Reference (load/store):
+		ALUOutput <= A + imm
+		ALU adds two operands to form the effective address and stores the result into register called
+		ALUOutput.
+	ii) Register-register Operation
+		ALUOutput <= A op B
+		ALU performs the operation specified by the instruction on the values stored in temporary registers A
+		and B and places the result into ALUOutput.
+	iii) Register-Immediate Operation
+		ALUOutput <= A op imm
+		ALU performs the operation specified by the instruction on the value stored in temporary register A and
+		value in register imm and places the result into ALUOutput. 
+	
+	*/
 	/*Implement this function*/
 }
 

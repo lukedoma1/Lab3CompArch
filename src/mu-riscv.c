@@ -357,6 +357,12 @@ void WB()
 
     // Increment the instruction count after successful execution
     INSTRUCTION_COUNT++;
+
+	//end the simulation if all instructions are done
+	if (INSTRUCTION_COUNT >= PROGRAM_SIZE)
+	{
+		RUN_FLAG = false;
+	}
 }
 
 /************************************************************/

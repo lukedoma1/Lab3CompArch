@@ -407,8 +407,7 @@ void MEM()
 	EX/MEM.ALUOutput 
 */
 void EX()
-{
-	EX_MEM.IR = ID_EX.IR;
+{	
 	uint32_t instruction = ID_EX.IR;  // Get instruction from the pipeline register
 	uint8_t opcode = GET_OPCODE(instruction);
 	uint8_t funct3 = GET_FUNCT3(instruction);
@@ -470,17 +469,29 @@ void EX()
 			case 0x4:	//XOR Immediate
 				EX_MEM.ALUOutput = ID_EX.A ^ ID_EX.imm;
 				break;
-			case 0x6:	//OR Immed
+			case 0x6:	//OR Immediate
+				EX_MEM.ALUOutput = ID_EX.A | ID_EX.imm;
 				break;
-			case 0x7:
+			case 0x7:	//AND immediate
+				EX_MEM.ALUOutput = ID_EX.A & ID_EX.imm;
 				break;
-			case 0x1:
+			case 0x1:	//Left shift logical immediate
+				EX_MEM.ALUOutput = ID_EX.A << (ID_EX.imm & 0x1F);
 				break;
 			case 0x5:
+				uint8_t funct7 = (ID_EX.imm >> 5) & 0x7F;
+				if(funct7 == 0x00){ //shift right logical imm
+					EX_MEM.ALUOutput = ID_EX.A >> (ID_EX.imm & 0x1F);
+				}
+				else if(funct7 == 0x20){	//Add casting later?? Not done
+					EX_MEM.ALUOutput = ID_EX.A >> (ID_EX.imm & 0x1F);
+				}
 				break;
 			case 0x2:
+				EX_MEM.ALUOutput = (ID_EX.A < ID_EX.imm)?1:0;
 				break;
 			case 0x3:
+				EX_MEM.ALUOutput = (ID_EX.A < ID_EX.imm)?1:0;
 				break;
 		}
 	}
@@ -499,7 +510,11 @@ void EX()
 		value in register imm and places the result into ALUOutput. 
 	
 	*/
-	/*Implement this function*/
+	//Update registers
+	EX_MEM.IR = ID_EX.IR;
+	EX_MEM.A = ID_EX.A;
+	EX_MEM.B = ID_EX.B;
+	EX_MEM.PC = ID_EX.PC;
 }
 
 /************************************************************/

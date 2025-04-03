@@ -328,7 +328,7 @@ void handle_pipeline()
 	}
 	bubble = false;
 	
-	
+	show_pipeline();
 }
 
 /************************************************************/
@@ -417,6 +417,7 @@ void EX()
 	uint32_t instruction = ID_EX.IR;  // Get instruction from the pipeline register
 	uint8_t opcode = GET_OPCODE(instruction);
 	uint8_t funct3 = GET_FUNCT3(instruction);
+	uint8_t funct7;
 	if(opcode == LOAD_OPCODE || opcode == STORE_OPCODE){
 		EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
 	}
@@ -485,7 +486,7 @@ void EX()
 				EX_MEM.ALUOutput = ID_EX.A << (ID_EX.imm & 0x1F);
 				break;
 			case 0x5:
-				uint8_t funct7 = (ID_EX.imm >> 5) & 0x7F;
+				funct7 = (ID_EX.imm >> 5) & 0x7F;
 				if(funct7 == 0x00){ //shift right logical imm
 					EX_MEM.ALUOutput = ID_EX.A >> (ID_EX.imm & 0x1F);
 				}
@@ -868,7 +869,30 @@ void print_b_cmd(char* cmd_name, uint8_t rs1, uint8_t rs2, uint16_t imm) {
 /* Print the current pipeline                                                                                    */
 /************************************************************/
 void show_pipeline(){
-	/*Implement this function*/
+	printf("--------------------------------------------------\n");
+    printf("Cycle: %d\n", CYCLE_COUNT);
+    printf("--------------------------------------------------\n");
+
+    // Print IF/ID pipeline register
+    printf("IF/ID:\n");
+    printf("  PC: 0x%08X | IR: 0x%08X\n", IF_ID.PC, IF_ID.IR);
+
+    // Print ID/EX pipeline register
+    printf("ID/EX:\n");
+    printf("  PC: 0x%08X | IR: 0x%08X | A: 0x%08X | B: 0x%08X | imm: 0x%08X\n", 
+            ID_EX.PC, ID_EX.IR, ID_EX.A, ID_EX.B, ID_EX.imm);
+
+    // Print EX/MEM pipeline register
+    printf("EX/MEM:\n");
+    printf("  PC: 0x%08X | IR: 0x%08X | ALUOutput: 0x%08X | B: 0x%08X\n", 
+            EX_MEM.PC, EX_MEM.IR, EX_MEM.ALUOutput, EX_MEM.B);
+
+    // Print MEM/WB pipeline register
+    printf("MEM/WB:\n");
+    printf("  PC: 0x%08X | IR: 0x%08X | ALUOutput: 0x%08X | LMD: 0x%08X\n", 
+            MEM_WB.PC, MEM_WB.IR, MEM_WB.ALUOutput, MEM_WB.LMD);
+
+    printf("--------------------------------------------------\n");
 }
 
 /***************************************************************/

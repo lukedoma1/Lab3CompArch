@@ -499,7 +499,13 @@ void EX()
 			case 0x3:
 				EX_MEM.ALUOutput = (ID_EX.A < ID_EX.imm)?1:0;
 				break;
-		}
+			}
+	}
+	else if(opcode == 0110111){	//load upper immediate
+		EX_MEM.ALUOutput = ID_EX.imm << 12;
+	}
+	else if(opcode == 0010111){ //add upper immediate to pc
+		EX_MEM.ALUOutput = ID_EX.PC + (ID_EX.imm << 12);
 	}
 	/*
 	i) Memory Reference (load/store):

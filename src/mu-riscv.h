@@ -137,6 +137,7 @@ void reset();
 void init_memory();
 void load_program();
 void handle_pipeline();
+void Forward();
 void WB();
 void MEM();
 void EX();

@@ -340,30 +340,50 @@ void DetectHazardsAndForward()
 	{
 		uint8_t id_ex_rs1 = (ID_EX.IR >> 15) & BIT_MASK_5;
 		uint8_t id_ex_rs2 = (ID_EX.IR >> 20) & BIT_MASK_5;
-		bool type_1_hazard = false;
+
+		// Type 2 data hazard
+		uint8_t mem_wb_opcode = GET_OPCODE(MEM_WB.IR);
+		if ((mem_wb_opcode == LOAD_OPCODE || mem_wb_opcode == R_OPCODE ||        // mem_wb has an rd
+			mem_wb_opcode == IMM_ALU_OPCODE || mem_wb_opcode == JUMP_OPCODE))
+		{
+			uint8_t mem_wb_rd = (MEM_WB.IR >> 7) & BIT_MASK_5;
+			// Hazard on rs1
+			if (mem_wb_rd == id_ex_rs1)
+			{
+				if (mem_wb_opcode == LOAD_OPCODE)
+				{
+					ID_EX.A = MEM_WB.LMD;  // Forward word from MEM to rs1
+				}
+				else
+				{
+					ID_EX.A = MEM_WB.ALUOutput; // Forward ALU output to rs1
+				}
+			}
+			// Hazard on rs2
+			if (id_ex_opcode != IMM_ALU_OPCODE && id_ex_opcode != LOAD_OPCODE && mem_wb_rd == id_ex_rs2)
+			{
+				if (mem_wb_opcode == LOAD_OPCODE)
+				{
+					ID_EX.B = MEM_WB.LMD;   // Forward word from MEM to EX rs2
+				}
+				else
+				{
+					ID_EX.B = MEM_WB.ALUOutput;  // Forward ALU output to rs2
+				}
+			}
+		}
 		
 		// Type 1 data hazard
 		uint8_t ex_mem_opcode = GET_OPCODE(EX_MEM.IR);
 		if (ex_mem_opcode == LOAD_OPCODE || ex_mem_opcode == R_OPCODE ||        // ex_mem has an rd
 			ex_mem_opcode == IMM_ALU_OPCODE || ex_mem_opcode == JUMP_OPCODE)
 		{
-			uint8_t ex_mem_rd = (EX_MEM.IR >> 7) & BIT_MASK_7;
+			uint8_t ex_mem_rd = (EX_MEM.IR >> 7) & BIT_MASK_5;
 
+			// Hazard on rs1
 			if (ex_mem_rd == id_ex_rs1)
 			{
-				if (ex_mem_opcode == LOAD_OPCODE)
-				{
-					ID_EX.A = EX_MEM.LMD;
-				}
-				else
-				{
-					ID_EX.A = EX_MEM.ALUOutput;
-				}
-				type_1_hazard = true;
-			}
-			else if (id_ex_opcode != IMM_ALU_OPCODE && id_ex_opcode != LOAD_OPCODE && ex_mem_rd == id_ex_rs2)
-			{
-				if (ex_mem_opcode == LOAD_OPCODE)  // Load use hazard; need a stall
+				if (ex_mem_opcode == LOAD_OPCODE)  // load use on rs1
 				{
 					bubble = true;  // Stall -> IF_ID wont update
 					// Flush ID_EX
@@ -374,39 +394,24 @@ void DetectHazardsAndForward()
 				}
 				else
 				{
-					ID_EX.B = EX_MEM.ALUOutput;
+					ID_EX.A = EX_MEM.ALUOutput;  
 				}
-				type_1_hazard = true;
 			}
-		}
-
-		// Type 2 data hazard
-		uint8_t mem_wb_opcode = GET_OPCODE(MEM_WB.IR);
-		if (!type_1_hazard && (mem_wb_opcode == LOAD_OPCODE || mem_wb_opcode == R_OPCODE ||        // mem_wb has an rd
-			mem_wb_opcode == IMM_ALU_OPCODE || mem_wb_opcode == JUMP_OPCODE))
-		{
-			uint8_t mem_wb_rd = (MEM_WB.IR >> 7) & BIT_MASK_7;
-
-			if (mem_wb_rd == id_ex_rs1)
+			// Hazard on rs2
+			if (id_ex_opcode != IMM_ALU_OPCODE && id_ex_opcode != LOAD_OPCODE && ex_mem_rd == id_ex_rs2)
 			{
-				if (mem_wb_opcode == LOAD_OPCODE)
+				if (ex_mem_opcode == LOAD_OPCODE)  // load use on rs2
 				{
-					ID_EX.A = MEM_WB.LMD;
+					bubble = true;  // Stall -> IF_ID wont update
+					// Flush ID_EX
+					ID_EX.PC = 0;
+					ID_EX.IR = 0;
+					ID_EX.A = 0;
+					ID_EX.B = 0;
 				}
 				else
 				{
-					ID_EX.A = EX_MEM.ALUOutput;
-				}
-			}
-			else if (id_ex_opcode != IMM_ALU_OPCODE && id_ex_opcode != LOAD_OPCODE && mem_wb_rd == id_ex_rs2)
-			{
-				if (mem_wb_opcode == LOAD_OPCODE)
-				{
-					ID_EX.A = MEM_WB.LMD;
-				}
-				else
-				{
-					ID_EX.A = MEM_WB.ALUOutput;
+					ID_EX.B = EX_MEM.ALUOutput;  // Forward ALU output to EX rs2
 				}
 			}
 		}

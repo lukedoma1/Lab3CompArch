@@ -341,8 +341,9 @@ void DetectHazardsAndForward()
 		uint8_t id_ex_rs1 = (ID_EX.IR >> 15) & BIT_MASK_5;
 		uint8_t id_ex_rs2 = (ID_EX.IR >> 20) & BIT_MASK_5;
 
-		// Type 2 data hazard
+		// Data hazard between instructions in EX and ID stages
 		uint8_t mem_wb_opcode = GET_OPCODE(MEM_WB.IR);
+		
 		if ((mem_wb_opcode == LOAD_OPCODE || mem_wb_opcode == R_OPCODE ||        // mem_wb has an rd
 			mem_wb_opcode == IMM_ALU_OPCODE || mem_wb_opcode == JUMP_OPCODE))
 		{
@@ -373,7 +374,7 @@ void DetectHazardsAndForward()
 			}
 		}
 		
-		// Type 1 data hazard
+		// Data hazard between instructions in MEM and ID stages
 		uint8_t ex_mem_opcode = GET_OPCODE(EX_MEM.IR);
 		if (ex_mem_opcode == LOAD_OPCODE || ex_mem_opcode == R_OPCODE ||        // ex_mem has an rd
 			ex_mem_opcode == IMM_ALU_OPCODE || ex_mem_opcode == JUMP_OPCODE)
@@ -383,7 +384,7 @@ void DetectHazardsAndForward()
 			// Hazard on rs1
 			if (ex_mem_rd == id_ex_rs1)
 			{
-				if (ex_mem_opcode == LOAD_OPCODE)  // load use on rs1
+				if (ex_mem_opcode == LOAD_OPCODE)  // load-use hazard on rs1
 				{
 					bubble = true;  // Stall -> IF_ID wont update
 					// Flush ID_EX
@@ -400,7 +401,7 @@ void DetectHazardsAndForward()
 			// Hazard on rs2
 			if (id_ex_opcode != IMM_ALU_OPCODE && id_ex_opcode != LOAD_OPCODE && ex_mem_rd == id_ex_rs2)
 			{
-				if (ex_mem_opcode == LOAD_OPCODE)  // load use on rs2
+				if (ex_mem_opcode == LOAD_OPCODE)  // load-use hazard on rs2
 				{
 					bubble = true;  // Stall -> IF_ID wont update
 					// Flush ID_EX

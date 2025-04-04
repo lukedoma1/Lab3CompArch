@@ -326,13 +326,12 @@ void handle_pipeline()
 		IF();
 	}
 	bubble = false;
-	Forward();
 	show_pipeline();
 }
 /************************************************************/
 /* Forwarding Unit
 /************************************************************/
-void Forward()
+void DetectHazardsAndForward()
 {
 	uint8_t id_ex_opcode = GET_OPCODE(ID_EX.IR);
 	if (id_ex_opcode == R_OPCODE || id_ex_opcode == IMM_ALU_OPCODE ||       // id_ex has an rs1 or rs2
@@ -364,9 +363,14 @@ void Forward()
 			}
 			else if (id_ex_opcode != IMM_ALU_OPCODE && id_ex_opcode != LOAD_OPCODE && ex_mem_rd == id_ex_rs2)
 			{
-				if (ex_mem_opcode == LOAD_OPCODE)
+				if (ex_mem_opcode == LOAD_OPCODE)  // Load use hazard; need a stall
 				{
-					ID_EX.B = EX_MEM.LMD;
+					bubble = true;  // Stall -> IF_ID wont update
+					// Flush ID_EX
+					ID_EX.PC = 0;
+					ID_EX.IR = 0;
+					ID_EX.A = 0;
+					ID_EX.B = 0;
 				}
 				else
 				{
@@ -644,6 +648,7 @@ void ID()
     // Pass PC to next pipeline stage
     ID_EX.PC = IF_ID.PC;
     ID_EX.IR = IF_ID.IR;  // Pass instruction forward for debugging or later stages
+	DetectHazardsAndForward();
 }
 
 /************************************************************/

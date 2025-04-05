@@ -341,7 +341,7 @@ void DetectHazardsAndForward()
 		uint8_t id_ex_rs1 = (ID_EX.IR >> 15) & BIT_MASK_5;
 		uint8_t id_ex_rs2 = (ID_EX.IR >> 20) & BIT_MASK_5;
 
-		// Data hazard between instructions in EX and ID stages
+		// Data hazard between instructions in MEM and ID stages
 		uint8_t mem_wb_opcode = GET_OPCODE(MEM_WB.IR);
 		
 		if ((mem_wb_opcode == LOAD_OPCODE || mem_wb_opcode == R_OPCODE ||        // mem_wb has an rd
@@ -374,13 +374,13 @@ void DetectHazardsAndForward()
 			}
 		}
 		
-		// Data hazard between instructions in MEM and ID stages
+		// Data hazard between instructions in EX and ID stages
 		uint8_t ex_mem_opcode = GET_OPCODE(EX_MEM.IR);
 		if (ex_mem_opcode == LOAD_OPCODE || ex_mem_opcode == R_OPCODE ||        // ex_mem has an rd
 			ex_mem_opcode == IMM_ALU_OPCODE || ex_mem_opcode == JUMP_OPCODE)
 		{
 			uint8_t ex_mem_rd = (EX_MEM.IR >> 7) & BIT_MASK_5;
-
+			
 			// Hazard on rs1
 			if (ex_mem_rd == id_ex_rs1)
 			{
@@ -395,7 +395,7 @@ void DetectHazardsAndForward()
 				}
 				else
 				{
-					ID_EX.A = EX_MEM.ALUOutput;  
+					ID_EX.A = EX_MEM.ALUOutput;
 				}
 			}
 			// Hazard on rs2
@@ -637,9 +637,9 @@ void ID()
     uint8_t rd  = (instruction >> 7) & BIT_MASK_5;
 
     // Read values from the register file
-    ID_EX.A = CURRENT_STATE.REGS[rs1];  // Read first source register
-    ID_EX.B = CURRENT_STATE.REGS[rs2];  // Read second source register (only for R-type and Store instructions)
-
+    ID_EX.A = NEXT_STATE.REGS[rs1];  // Read first source register
+    ID_EX.B = NEXT_STATE.REGS[rs2];  // Read second source register (only for R-type and Store instructions)
+	
     // Extract and sign-extend immediate field only for relevant instructions
     if (opcode == IMM_ALU_OPCODE || opcode == LOAD_OPCODE) {
         // I-type instruction: sign-extend 12-bit immediate

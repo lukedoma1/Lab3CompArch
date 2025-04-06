@@ -539,7 +539,7 @@ void EX()
 		case 0x1:	//Shift left logical
 			EX_MEM.ALUOutput = ID_EX.A << ID_EX.B;
 			break;
-		case 0x5:			//NOTE: THIS NEEDS TO BE FIXED TO ENSURE THE MSB EXTENDS ON SRA
+		case 0x5:
 			switch(funct7){
 				case 0x00:	//shift right logical
 					EX_MEM.ALUOutput = ID_EX.A >> ID_EX.B;
@@ -550,7 +550,7 @@ void EX()
 			}
 			break;
 		case 0x2:	//set less than
-			EX_MEM.ALUOutput = ((int)ID_EX.A < (int)ID_EX.B)?1:0;
+			EX_MEM.ALUOutput = (ID_EX.A < ID_EX.B)?1:0;
 			break;
 		case 0x3:	//set less than (unsigned)
 			EX_MEM.ALUOutput = (ID_EX.A < ID_EX.B)?1:0;

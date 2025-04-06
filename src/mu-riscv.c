@@ -545,12 +545,12 @@ void EX()
 					EX_MEM.ALUOutput = ID_EX.A >> ID_EX.B;
 					break;
 				case 0x20:	//shift right arithmetic
-					EX_MEM.ALUOutput = ID_EX.A >> ID_EX.B;
+					EX_MEM.ALUOutput = (int32_t)ID_EX.A >> (int32_t)ID_EX.B;
 					break;
 			}
 			break;
 		case 0x2:	//set less than
-			EX_MEM.ALUOutput = (ID_EX.A < ID_EX.B)?1:0;
+			EX_MEM.ALUOutput = ((int)ID_EX.A < (int)ID_EX.B)?1:0;
 			break;
 		case 0x3:	//set less than (unsigned)
 			EX_MEM.ALUOutput = (ID_EX.A < ID_EX.B)?1:0;
@@ -581,14 +581,14 @@ void EX()
 				if(funct7 == 0x00){ //shift right logical imm
 					EX_MEM.ALUOutput = ID_EX.A >> (ID_EX.imm & 0x1F);
 				}
-				else if(funct7 == 0x20){	//Add casting later?? Not done
-					EX_MEM.ALUOutput = ID_EX.A >> (ID_EX.imm & 0x1F);
+				else if(funct7 == 0x20){	//shift right arithmetic immediate
+					EX_MEM.ALUOutput = (int32_t)ID_EX.A >> (ID_EX.imm & 0x1F);
 				}
 				break;
-			case 0x2:
+			case 0x2:	//set less than immediate
 				EX_MEM.ALUOutput = (ID_EX.A < ID_EX.imm)?1:0;
 				break;
-			case 0x3:
+			case 0x3:	//set less than immediate (unsigned)
 				EX_MEM.ALUOutput = (ID_EX.A < ID_EX.imm)?1:0;
 				break;
 			}

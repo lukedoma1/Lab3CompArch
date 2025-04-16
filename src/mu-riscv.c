@@ -328,6 +328,14 @@ void handle_pipeline()
 	bubble = false;
 	show_pipeline();
 }
+void stall(){
+	bubble = true;  // Stall -> IF_ID wont update
+	// Flush ID_EX
+	ID_EX.PC = 0;
+	ID_EX.IR = 0;
+	ID_EX.A = 0;
+	ID_EX.B = 0;
+}
 /************************************************************/
 /* Forwarding Unit
 /************************************************************/
@@ -353,11 +361,21 @@ void DetectHazardsAndForward()
 			{
 				if (mem_wb_opcode == LOAD_OPCODE)
 				{
-					ID_EX.A = MEM_WB.LMD;  // Forward word from MEM to rs1
+					if(ENABLE_FORWARDING)
+						ID_EX.A = MEM_WB.LMD;  // Forward word from MEM to rs1
+					else{
+						stall();
+						return;
+					}
 				}
 				else
 				{
-					ID_EX.A = MEM_WB.ALUOutput; // Forward ALU output to rs1
+					if(ENABLE_FORWARDING)
+						ID_EX.A = MEM_WB.ALUOutput; // Forward ALU output to rs1
+					else{
+						stall();
+						return;
+					}
 				}
 			}
 			// Hazard on rs2
@@ -365,11 +383,21 @@ void DetectHazardsAndForward()
 			{
 				if (mem_wb_opcode == LOAD_OPCODE)
 				{
-					ID_EX.B = MEM_WB.LMD;   // Forward word from MEM to EX rs2
+					if(ENABLE_FORWARDING)
+						ID_EX.B = MEM_WB.LMD;   // Forward word from MEM to EX rs2
+					else{
+						stall();
+						return;
+					}
 				}
 				else
 				{
-					ID_EX.B = MEM_WB.ALUOutput;  // Forward ALU output to rs2
+					if(ENABLE_FORWARDING)
+						ID_EX.B = MEM_WB.ALUOutput;  // Forward ALU output to rs2
+					else{
+						stall();
+						return;
+					}
 				}
 			}
 		}
@@ -386,16 +414,17 @@ void DetectHazardsAndForward()
 			{
 				if (ex_mem_opcode == LOAD_OPCODE)  // load-use hazard on rs1
 				{
-					bubble = true;  // Stall -> IF_ID wont update
-					// Flush ID_EX
-					ID_EX.PC = 0;
-					ID_EX.IR = 0;
-					ID_EX.A = 0;
-					ID_EX.B = 0;
+					stall();
+					return;
 				}
 				else
 				{
-					ID_EX.A = EX_MEM.ALUOutput;
+					if(ENABLE_FORWARDING)
+						ID_EX.A = EX_MEM.ALUOutput;
+					else{
+						stall();
+						return;
+					}
 				}
 			}
 			// Hazard on rs2
@@ -403,16 +432,17 @@ void DetectHazardsAndForward()
 			{
 				if (ex_mem_opcode == LOAD_OPCODE)  // load-use hazard on rs2
 				{
-					bubble = true;  // Stall -> IF_ID wont update
-					// Flush ID_EX
-					ID_EX.PC = 0;
-					ID_EX.IR = 0;
-					ID_EX.A = 0;
-					ID_EX.B = 0;
+					stall();
+					return;
 				}
 				else
 				{
-					ID_EX.B = EX_MEM.ALUOutput;  // Forward ALU output to EX rs2
+					if(ENABLE_FORWARDING)
+						ID_EX.B = EX_MEM.ALUOutput;  // Forward ALU output to EX rs2
+					else{
+						stall();
+						return;
+					}
 				}
 			}
 		}
@@ -614,7 +644,7 @@ void EX()
 		value in register imm and places the result into ALUOutput. 
 	
 	*/
-	//Update registers
+	//Update pipeline registers
 	EX_MEM.IR = ID_EX.IR;
 	EX_MEM.A = ID_EX.A;
 	EX_MEM.B = ID_EX.B;

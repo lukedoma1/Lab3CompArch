@@ -263,6 +263,7 @@ void reset() {
 	load_program();
 
 	/*reset PC*/
+	CYCLE_COUNT = 0;	//new addition
 	INSTRUCTION_COUNT = 0;
 	CURRENT_STATE.PC =  MEM_TEXT_BEGIN;
 	NEXT_STATE = CURRENT_STATE;
@@ -335,10 +336,11 @@ void stall(){
 	ID_EX.IR = 0;
 	ID_EX.A = 0;
 	ID_EX.B = 0;
+	ID_EX.imm = 0;
 }
-/************************************************************/
+/*************************************************************
 /* Forwarding Unit
-/************************************************************/
+*************************************************************/
 void DetectHazardsAndForward()
 {
 	uint8_t id_ex_opcode = GET_OPCODE(ID_EX.IR);
@@ -659,12 +661,10 @@ void ID()
 	// Decode the fetched instruction
     uint32_t instruction = IF_ID.IR;  // Get instruction from the pipeline register
     uint8_t opcode = GET_OPCODE(instruction);
-    uint8_t funct3 = GET_FUNCT3(instruction);
 
     // Extract register operands
     uint8_t rs1 = (instruction >> 15) & BIT_MASK_5;
     uint8_t rs2 = (instruction >> 20) & BIT_MASK_5;
-    uint8_t rd  = (instruction >> 7) & BIT_MASK_5;
 
     // Read values from the register file
     ID_EX.A = NEXT_STATE.REGS[rs1];  // Read first source register

@@ -323,6 +323,24 @@ void handle_pipeline()
 	MEM();
 	EX();
 	ID();
+
+	// Handle control hazards
+	if (EX_MEM.is_control) {
+		if (EX_MEM.branch_taken) {
+			// Flush the incorrectly fetched instruction (in IF_ID)
+			IF_ID.IR = 0;
+			IF_ID.PC = 0;
+			
+			// Update PC with the branch/jump target
+			NEXT_STATE.PC = EX_MEM.ALUOutput;
+		}
+	
+	// Always stall for 1 cycle after control instruction
+	bubble = true;
+	}
+
+
+
 	if(!bubble) {
 		IF();
 	}
@@ -498,6 +516,10 @@ void MEM()
 	for store: MEM[ALUOutput] <= B 
 	*/
 
+	// Pass through control signals
+    MEM_WB.is_control = EX_MEM.is_control;
+    MEM_WB.branch_taken = EX_MEM.branch_taken;
+
 	if (EX_MEM.IR != 0) // Instruction to execute
     {
 		uint32_t opcode = GET_OPCODE(EX_MEM.IR);
@@ -541,6 +563,11 @@ void EX()
 	uint8_t opcode = GET_OPCODE(instruction);
 	uint8_t funct3 = GET_FUNCT3(instruction);
 	uint8_t funct7;
+
+	// Initialize control signals
+    EX_MEM.branch_taken = 0;
+    EX_MEM.is_control = 0;
+
 	if(opcode == LOAD_OPCODE || opcode == STORE_OPCODE){
 		EX_MEM.ALUOutput = ID_EX.A + ID_EX.imm;
 	}
@@ -631,6 +658,56 @@ void EX()
 	else if(opcode == 0010111){ //add upper immediate to pc
 		EX_MEM.ALUOutput = ID_EX.PC + (ID_EX.imm << 12);
 	}
+	else if(opcode == BRANCH_OPCODE){ //branch handling
+		EX_MEM.is_control = 1;
+        int branch_taken = 0;
+        switch(funct3) {
+            case 0x0: // BEQ
+                branch_taken = (ID_EX.A == ID_EX.B);
+                break;
+            case 0x1: // BNE
+                branch_taken = (ID_EX.A != ID_EX.B);
+                break;
+            case 0x4: // BLT
+                branch_taken = ((int32_t)ID_EX.A < (int32_t)ID_EX.B);
+                break;
+            case 0x5: // BGE
+                branch_taken = ((int32_t)ID_EX.A >= (int32_t)ID_EX.B);
+                break;
+            case 0x6: // BLTU
+                branch_taken = (ID_EX.A < ID_EX.B);
+                break;
+            case 0x7: // BGEU
+                branch_taken = (ID_EX.A >= ID_EX.B);
+                break;
+        }
+        
+        if (branch_taken) {
+            EX_MEM.ALUOutput = ID_EX.PC + ID_EX.imm; // Branch target
+            EX_MEM.branch_taken = 1;
+        } else {
+            EX_MEM.ALUOutput = ID_EX.PC + 4; // Fall through
+            EX_MEM.branch_taken = 0;
+        }
+    } 
+    else if (opcode == JUMP_OPCODE) { // JAL
+        EX_MEM.is_control = 1;
+        EX_MEM.ALUOutput = ID_EX.PC + ID_EX.imm; // Jump target
+        EX_MEM.branch_taken = 1;
+        
+        // Save return address (PC+4) in rd
+        uint8_t rd = (instruction >> 7) & BIT_MASK_5;
+        NEXT_STATE.REGS[rd] = ID_EX.PC + 4;
+    }
+    else if (opcode == JALR_OPCODE) { // JALR
+        EX_MEM.is_control = 1;
+        EX_MEM.ALUOutput = (ID_EX.A + ID_EX.imm) & ~1; // Jump target (clear LSB)
+        EX_MEM.branch_taken = 1;
+        
+        // Save return address (PC+4) in rd
+        uint8_t rd = (instruction >> 7) & BIT_MASK_5;
+        NEXT_STATE.REGS[rd] = ID_EX.PC + 4;
+    }
 	/*
 	i) Memory Reference (load/store):
 		ALUOutput <= A + imm
@@ -662,6 +739,9 @@ void ID()
     uint32_t instruction = IF_ID.IR;  // Get instruction from the pipeline register
     uint8_t opcode = GET_OPCODE(instruction);
 
+	// Initialize control signals
+    ID_EX.is_control = 0;
+
     // Extract register operands
     uint8_t rs1 = (instruction >> 15) & BIT_MASK_5;
     uint8_t rs2 = (instruction >> 20) & BIT_MASK_5;
@@ -669,6 +749,11 @@ void ID()
     // Read values from the register file
     ID_EX.A = NEXT_STATE.REGS[rs1];  // Read first source register
     ID_EX.B = NEXT_STATE.REGS[rs2];  // Read second source register (only for R-type and Store instructions)
+
+	// Detect control instructions
+    if (opcode == BRANCH_OPCODE || opcode == JUMP_OPCODE || opcode == JALR_OPCODE) {
+        ID_EX.is_control = 1;
+    }
 	
     // Extract and sign-extend immediate field only for relevant instructions
     if (opcode == IMM_ALU_OPCODE || opcode == LOAD_OPCODE) {
@@ -1003,21 +1088,21 @@ void show_pipeline(){
 
     // Print IF/ID pipeline register
     printf("IF/ID:\n");
-    printf("  PC: %d | IR: %d\n", IF_ID.PC, IF_ID.IR);
+    printf("  PC: 0x%08x | IR: 0x%08x\n", IF_ID.PC, IF_ID.IR);
 
     // Print ID/EX pipeline register
     printf("ID/EX:\n");
-    printf("  PC: %d | IR: %d | A: %d | B: %d | imm: %d\n", 
-            ID_EX.PC, ID_EX.IR, ID_EX.A, ID_EX.B, ID_EX.imm);
+    printf("  PC: 0x%08x | IR: 0x%08x | A: 0x%08x | B: 0x%08x | imm: 0x%08x | is_control: %d\n", 
+            ID_EX.PC, ID_EX.IR, ID_EX.A, ID_EX.B, ID_EX.imm, ID_EX.is_control);
 
     // Print EX/MEM pipeline register
     printf("EX/MEM:\n");
-    printf("  PC: %d | IR: %d | ALUOutput: %d | B: %d\n", 
-            EX_MEM.PC, EX_MEM.IR, EX_MEM.ALUOutput, EX_MEM.B);
+    printf("  PC: 0x%08x | IR: 0x%08x | ALUOutput: 0x%08x | B: 0x%08x | branch_taken: %d\n", 
+            EX_MEM.PC, EX_MEM.IR, EX_MEM.ALUOutput, EX_MEM.B, EX_MEM.branch_taken);
 
     // Print MEM/WB pipeline register
     printf("MEM/WB:\n");
-    printf("  PC: %d | IR: %d | ALUOutput: %d | LMD: %d\n", 
+    printf("  PC: 0x%08x | IR: 0x%08x | ALUOutput: 0x%08x | LMD: 0x%08x\n", 
             MEM_WB.PC, MEM_WB.IR, MEM_WB.ALUOutput, MEM_WB.LMD);
 
     printf("--------------------------------------------------\n");

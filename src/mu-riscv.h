@@ -57,7 +57,8 @@ typedef struct CPU_Pipeline_Reg_Struct{
 	uint32_t imm;
 	uint32_t ALUOutput;
 	uint32_t LMD;
-	
+	uint8_t branch_taken;  // 1 if branch is taken or jump occurs
+    uint8_t is_control;    // 1 if instruction is branch/jump
 } CPU_Pipeline_Reg;
 
 /***************************************************************/
@@ -90,6 +91,7 @@ char prog_file[32];
 #define STORE_OPCODE 0b0100011
 #define BRANCH_OPCODE 0b1100011
 #define JUMP_OPCODE 0b1101111
+#define JALR_OPCODE 0b1100111
 
 
 /***************************************************************/

@@ -1097,7 +1097,7 @@ void handle_j_print(uint32_t bincmd) {
 	uint16_t bits10to1 = (scrambled_imm >> 9) & 0b1111111111;
 	uint8_t bit11 = (scrambled_imm >> 8) & 0b1; 
 	uint8_t bits19to12 = (scrambled_imm) & 0b11111111;
-	uint16_t offset = ((bit20 << 20) | (bits19to12 << 12) | (bit11 << 11) | (bits10to1 << 1));
+	uint16_t offset = ((bit20 << 20) | (bits19to12 << 12) | (bit11 << 11) | (bits10to1 << 1))>>1;
 	printf("jal x%d, %d", rd, offset);
 }
 

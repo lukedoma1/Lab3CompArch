@@ -714,6 +714,15 @@ void EX()
         uint8_t rd = (instruction >> 7) & BIT_MASK_5;
         NEXT_STATE.REGS[rd] = ID_EX.PC + 4;
     }
+	else{
+		EX_MEM.ALUOutput = 0;
+	}
+	if(EX_MEM.branch_taken == 1){
+		if(EX_MEM.ALUOutput % 4 != 0){
+			printf("Exception, incorrect branch\n");
+			RUN_FLAG = false;
+		}
+	}
 	/*
 	i) Memory Reference (load/store):
 		ALUOutput <= A + imm
@@ -827,7 +836,6 @@ void IF()
     
     // Store the PC of the fetched instruction for later stages
     IF_ID.PC = CURRENT_STATE.PC;
-    
     // Increment PC to point to the next instruction (assuming no branch/jump yet)
     NEXT_STATE.PC = CURRENT_STATE.PC + 4;
 }

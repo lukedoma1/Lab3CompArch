@@ -115,7 +115,7 @@ char prog_file[32];
 /***************************************************************/
 /* Data Hazard Help                                                                                                              */
 /***************************************************************/
-static int ENABLE_FORWARDING = 0;
+static int ENABLE_FORWARDING = 1;
 static uint8_t previous_rd = 0;
 static uint8_t double_previous_rd = 0;
 static bool last_lw = false;

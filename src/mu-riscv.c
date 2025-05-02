@@ -131,7 +131,7 @@ void rdump() {
 	printf("Dumping Register Content\n");
 	printf("-------------------------------------\n");
 	printf("# Instructions Executed\t: %u\n", INSTRUCTION_COUNT);
-	printf("PC\t: 0x%08x\n", CURRENT_STATE.PC);
+	printf("PC\t: %d\n", CURRENT_STATE.PC);
 	printf("-------------------------------------\n");
 	printf("[Register]\t[Value]\n");
 	printf("-------------------------------------\n");
@@ -342,7 +342,6 @@ void handle_pipeline()
 		}
 	
 	// Always stall for 1 cycle after control instruction
-	bubble = true;
 	}
 
 
@@ -473,7 +472,7 @@ void DetectHazardsAndForward()
 			}
 		}
 
-	}
+	} 
 	
 }
 /************************************************************/
@@ -762,7 +761,7 @@ void ID()
     }
 	
     // Extract and sign-extend immediate field only for relevant instructions
-    if (opcode == IMM_ALU_OPCODE || opcode == LOAD_OPCODE) {
+    if (opcode == IMM_ALU_OPCODE || opcode == LOAD_OPCODE || opcode == JALR_OPCODE) {
         // I-type instruction: sign-extend 12-bit immediate
         ID_EX.imm = (int32_t)(instruction >> 20);  
     } 
@@ -770,7 +769,27 @@ void ID()
         // S-type instruction: combine imm[11:5] and imm[4:0]
         ID_EX.imm = ((int32_t)(instruction >> 25) << 5) | ((instruction >> 7) & BIT_MASK_5);
     } 
-    else {
+    else if(opcode == JUMP_OPCODE){
+		uint32_t imm20   = (instruction >> 31) & 0x1;
+		uint32_t imm10_1 = (instruction >> 21) & 0x3FF;
+		uint32_t imm11   = (instruction >> 20) & 0x1;
+		uint32_t imm19_12= (instruction >> 12) & 0xFF;
+	
+		// Reassemble the immediate in proper order (bit positions)
+		uint32_t imm = (imm20 << 20) |
+					   (imm19_12 << 12) |
+					   (imm11 << 11) |
+					   (imm10_1 << 1);
+		
+		if (imm & (1 << 20)) {
+			imm | 0xFFE00000; // Set upper 11 bits to 1
+		} 
+		ID_EX.imm = imm;	
+	}
+	else if(opcode == 0110111 || opcode == 0010111){	//u-type instructions
+		ID_EX.imm = instruction & 0xFFFFF000;
+	}
+	else{
         ID_EX.imm = 0;  // No immediate needed for R-type instructions
     }
 
@@ -1060,7 +1079,7 @@ void handle_j_print(uint32_t bincmd) {
 	uint16_t bits10to1 = (scrambled_imm >> 9) & 0b1111111111;
 	uint8_t bit11 = (scrambled_imm >> 8) & 0b1; 
 	uint8_t bits19to12 = (scrambled_imm) & 0b11111111;
-	uint16_t offset = ((bit20 << 20) | (bits19to12 << 12) | (bit11 << 11) | (bits10to1 << 1)) >> 1;
+	uint16_t offset = ((bit20 << 20) | (bits19to12 << 12) | (bit11 << 11) | (bits10to1 << 1));
 	printf("jal x%d, %d", rd, offset);
 }
 
@@ -1094,21 +1113,21 @@ void show_pipeline(){
 
     // Print IF/ID pipeline register
     printf("IF/ID:\n");
-    printf("  PC: 0x%08x | IR: 0x%08x\n", IF_ID.PC, IF_ID.IR);
+    printf("  PC: %d | IR: 0x%08x\n", IF_ID.PC, IF_ID.IR);
 
     // Print ID/EX pipeline register
     printf("ID/EX:\n");
-    printf("  PC: 0x%08x | IR: %d | A: %d | B: %d | imm: %d | is_control: %d\n", 
+    printf("  PC: %d | IR: 0x%08x | A: %d | B: %d | imm: %d | is_control: %d\n", 
             ID_EX.PC, ID_EX.IR, ID_EX.A, ID_EX.B, ID_EX.imm, ID_EX.is_control);
 
     // Print EX/MEM pipeline register
     printf("EX/MEM:\n");
-    printf("  PC: 0x%08x | IR: %d | ALUOutput: %d | B: %d | branch_taken: %d\n", 
+    printf("  PC: %d | IR: 0x%08x | ALUOutput: %d | B: %d | branch_taken: %d\n", 
             EX_MEM.PC, EX_MEM.IR, EX_MEM.ALUOutput, EX_MEM.B, EX_MEM.branch_taken);
 
     // Print MEM/WB pipeline register
     printf("MEM/WB:\n");
-    printf("  PC: 0x%08x | IR: %d | ALUOutput: %d | LMD: %d\n", 
+    printf("  PC: %d | IR: 0x%08x | ALUOutput: %d | LMD: %d\n", 
             MEM_WB.PC, MEM_WB.IR, MEM_WB.ALUOutput, MEM_WB.LMD);
 
     printf("--------------------------------------------------\n");

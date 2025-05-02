@@ -768,7 +768,24 @@ void ID()
     else if (opcode == STORE_OPCODE) {
         // S-type instruction: combine imm[11:5] and imm[4:0]
         ID_EX.imm = ((int32_t)(instruction >> 25) << 5) | ((instruction >> 7) & BIT_MASK_5);
-    } 
+    }
+	else if(opcode == BRANCH_OPCODE){
+		int32_t imm12    = (inst >> 31) & 0x1;
+		int32_t imm10_5  = (inst >> 25) & 0x3F;
+		int32_t imm4_1   = (inst >> 8) & 0xF;
+		int32_t imm11    = (inst >> 7) & 0x1;
+	
+		int32_t imm = (imm12 << 12) |
+					  (imm11 << 11) |
+					  (imm10_5 << 5) |
+					  (imm4_1 << 1);
+	
+		// Sign-extend 13-bit immediate to 32 bits
+		if (imm12)
+			imm |= 0xFFFFE000;
+
+		ID_EX.imm = imm;	
+	}
     else if(opcode == JUMP_OPCODE){
 		uint32_t imm20   = (instruction >> 31) & 0x1;
 		uint32_t imm10_1 = (instruction >> 21) & 0x3FF;

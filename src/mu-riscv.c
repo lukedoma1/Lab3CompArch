@@ -334,14 +334,15 @@ void handle_pipeline()
 	if (EX_MEM.is_control) {
 		if (EX_MEM.branch_taken) {
 			// Flush the incorrectly fetched instruction (in IF_ID)
-			IF_ID.IR = 0;
-			IF_ID.PC = 0;
+			memset(&IF_ID, 0, sizeof(IF_ID));
+			memset(&ID_EX, 0, sizeof(ID_EX));
 			
 			// Update PC with the branch/jump target
 			NEXT_STATE.PC = EX_MEM.ALUOutput;
 		}
 	
 	// Always stall for 1 cycle after control instruction
+		bubble = true;
 	}
 
 

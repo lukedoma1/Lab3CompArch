@@ -136,7 +136,7 @@ void rdump() {
 	printf("[Register]\t[Value]\n");
 	printf("-------------------------------------\n");
 	for (i = 0; i < RISCV_REGS; i++){
-		printf("[R%d]\t: 0x%08x\n", i, CURRENT_STATE.REGS[i]);
+		printf("[R%d]\t: %d\n", i, CURRENT_STATE.REGS[i]);
 	}
 	printf("-------------------------------------\n");
 	printf("[HI]\t: 0x%08x\n", CURRENT_STATE.HI);
@@ -268,6 +268,12 @@ void reset() {
 	CURRENT_STATE.PC =  MEM_TEXT_BEGIN;
 	NEXT_STATE = CURRENT_STATE;
 	RUN_FLAG = TRUE;
+
+	/* Reset Pipeline Registers */
+	memset(&IF_ID, 0, sizeof(IF_ID));
+	memset(&ID_EX, 0, sizeof(ID_EX));
+	memset(&EX_MEM, 0, sizeof(EX_MEM));
+	memset(&MEM_WB, 0, sizeof(MEM_WB));
 }
 
 /***************************************************************/
@@ -1092,17 +1098,17 @@ void show_pipeline(){
 
     // Print ID/EX pipeline register
     printf("ID/EX:\n");
-    printf("  PC: 0x%08x | IR: 0x%08x | A: 0x%08x | B: 0x%08x | imm: 0x%08x | is_control: %d\n", 
+    printf("  PC: 0x%08x | IR: %d | A: %d | B: %d | imm: %d | is_control: %d\n", 
             ID_EX.PC, ID_EX.IR, ID_EX.A, ID_EX.B, ID_EX.imm, ID_EX.is_control);
 
     // Print EX/MEM pipeline register
     printf("EX/MEM:\n");
-    printf("  PC: 0x%08x | IR: 0x%08x | ALUOutput: 0x%08x | B: 0x%08x | branch_taken: %d\n", 
+    printf("  PC: 0x%08x | IR: %d | ALUOutput: %d | B: %d | branch_taken: %d\n", 
             EX_MEM.PC, EX_MEM.IR, EX_MEM.ALUOutput, EX_MEM.B, EX_MEM.branch_taken);
 
     // Print MEM/WB pipeline register
     printf("MEM/WB:\n");
-    printf("  PC: 0x%08x | IR: 0x%08x | ALUOutput: 0x%08x | LMD: 0x%08x\n", 
+    printf("  PC: 0x%08x | IR: %d | ALUOutput: %d | LMD: %d\n", 
             MEM_WB.PC, MEM_WB.IR, MEM_WB.ALUOutput, MEM_WB.LMD);
 
     printf("--------------------------------------------------\n");

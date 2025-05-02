@@ -313,6 +313,7 @@ void load_program() {
 		i += 4;
 	}
 	PROGRAM_SIZE = i/4;
+	END_PC = MEM_TEXT_BEGIN + (PROGRAM_SIZE *4);
 	printf("Program loaded into memory.\n%d words written into memory.\n\n", PROGRAM_SIZE);
 	fclose(fp);
 }
@@ -346,12 +347,15 @@ void handle_pipeline()
 	}
 
 
-
 	if(!bubble) {
 		IF();
 	}
 	bubble = false;
 	show_pipeline();
+	printf("MEM_WB.PC: %d END PC: %d\n", MEM_WB.PC, END_PC);
+	if(MEM_WB.PC >= END_PC){
+		RUN_FLAG = false;
+	}
 }
 void stall(){
 	bubble = true;  // Stall -> IF_ID wont update
@@ -502,12 +506,6 @@ void WB()
 
     // Increment the instruction count after successful execution
     INSTRUCTION_COUNT++;
-
-	//end the simulation if all instructions are done
-	if (INSTRUCTION_COUNT >= PROGRAM_SIZE)
-	{
-		RUN_FLAG = false;
-	}
 }
 
 /************************************************************/

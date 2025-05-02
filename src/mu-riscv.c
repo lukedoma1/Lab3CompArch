@@ -800,7 +800,7 @@ void ID()
 					   (imm10_1 << 1);
 		
 		if (imm & (1 << 20)) {
-			imm | 0xFFE00000; // Set upper 11 bits to 1
+			imm |= 0xFFE00000; // Set upper 11 bits to 1
 		} 
 		ID_EX.imm = imm;	
 	}

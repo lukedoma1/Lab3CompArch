@@ -770,10 +770,10 @@ void ID()
         ID_EX.imm = ((int32_t)(instruction >> 25) << 5) | ((instruction >> 7) & BIT_MASK_5);
     }
 	else if(opcode == BRANCH_OPCODE){
-		int32_t imm12    = (inst >> 31) & 0x1;
-		int32_t imm10_5  = (inst >> 25) & 0x3F;
-		int32_t imm4_1   = (inst >> 8) & 0xF;
-		int32_t imm11    = (inst >> 7) & 0x1;
+		int32_t imm12    = (instruction >> 31) & 0x1;
+		int32_t imm10_5  = (instruction >> 25) & 0x3F;
+		int32_t imm4_1   = (instruction >> 8) & 0xF;
+		int32_t imm11    = (instruction >> 7) & 0x1;
 	
 		int32_t imm = (imm12 << 12) |
 					  (imm11 << 11) |

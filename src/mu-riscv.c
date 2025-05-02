@@ -313,7 +313,7 @@ void load_program() {
 		i += 4;
 	}
 	PROGRAM_SIZE = i/4;
-	END_PC = MEM_TEXT_BEGIN + (PROGRAM_SIZE *4);
+	END_PC = MEM_TEXT_BEGIN + (PROGRAM_SIZE *4) - 4;
 	printf("Program loaded into memory.\n%d words written into memory.\n\n", PROGRAM_SIZE);
 	fclose(fp);
 }

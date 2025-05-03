@@ -335,6 +335,7 @@ void handle_pipeline()
 	if (EX_MEM.is_control) {
 		if (EX_MEM.branch_taken) {
 			// Flush the incorrectly fetched instruction (in IF_ID)
+			
 			memset(&IF_ID, 0, sizeof(IF_ID));
 			memset(&ID_EX, 0, sizeof(ID_EX));
 			
@@ -353,9 +354,6 @@ void handle_pipeline()
 	bubble = false;
 	show_pipeline();
 	printf("MEM_WB.PC: %d END PC: %d\n", MEM_WB.PC, END_PC);
-	if(MEM_WB.PC >= END_PC){
-		RUN_FLAG = false;
-	}
 }
 void stall(){
 	bubble = true;  // Stall -> IF_ID wont update
@@ -490,7 +488,11 @@ void WB()
 	for register-immediate instruction: REGS[rt] <= ALUOutput
 	for load instruction: REGS[rt] <= LMD 
 	*/
-	if (MEM_WB.IR == 0) return;  // No-op if the instruction is empty
+	if(MEM_WB.PC >= END_PC){
+		RUN_FLAG = false;
+	}
+	if (MEM_WB.IR == 0) 
+		return;  // No-op if the instruction is empty
 
     uint8_t opcode = GET_OPCODE(MEM_WB.IR);
     uint8_t rd = (MEM_WB.IR >> 7) & BIT_MASK_5;  // Destination register (rd)
